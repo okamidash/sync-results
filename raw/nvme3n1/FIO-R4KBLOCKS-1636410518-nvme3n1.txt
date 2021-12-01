@@ -1,0 +1,40 @@
+nvme3n1: (g=0): rw=write, bs=(R) 2300B-2300B, (W) 2300B-2300B, (T) 2300B-2300B, ioengine=sync, iodepth=1
+fio-3.28
+Starting 1 process
+
+nvme3n1: (groupid=0, jobs=1): err= 0: pid=26928: Mon Nov  8 22:32:27 2021
+  write: IOPS=1151, BW=2587KiB/s (2650kB/s)(220MiB/87060msec); 0 zone resets
+    clat (nsec): min=632, max=6505.7k, avg=32881.34, stdev=34991.07
+     lat (nsec): min=662, max=6506.1k, avg=32927.33, stdev=34993.90
+    clat percentiles (nsec):
+     |  1.00th=[   804],  5.00th=[   836], 10.00th=[   860], 20.00th=[   900],
+     | 30.00th=[  1064], 40.00th=[  1672], 50.00th=[ 56064], 60.00th=[ 56576],
+     | 70.00th=[ 57088], 80.00th=[ 57600], 90.00th=[ 58112], 95.00th=[ 58624],
+     | 99.00th=[ 61696], 99.50th=[ 76288], 99.90th=[ 91648], 99.95th=[ 92672],
+     | 99.99th=[321536]
+   bw (  KiB/s): min= 2538, max= 2641, per=99.98%, avg=2587.81, stdev=22.70, samples=174
+   iops        : min= 1130, max= 1176, avg=1152.37, stdev=10.18, samples=174
+  lat (nsec)   : 750=0.02%, 1000=29.13%
+  lat (usec)   : 2=14.28%, 4=0.38%, 10=0.01%, 20=0.01%, 50=0.01%
+  lat (usec)   : 100=56.12%, 250=0.03%, 500=0.01%, 750=0.01%
+  lat (msec)   : 10=0.01%
+  fsync/fdatasync/sync_file_range:
+    sync (usec): min=44, max=7211, avg=834.28, stdev=324.30
+    sync percentiles (usec):
+     |  1.00th=[  766],  5.00th=[  783], 10.00th=[  783], 20.00th=[  791],
+     | 30.00th=[  791], 40.00th=[  799], 50.00th=[  799], 60.00th=[  807],
+     | 70.00th=[  807], 80.00th=[  816], 90.00th=[  816], 95.00th=[  824],
+     | 99.00th=[ 3752], 99.50th=[ 3884], 99.90th=[ 4146], 99.95th=[ 4146],
+     | 99.99th=[ 4178]
+  cpu          : usr=0.10%, sys=0.67%, ctx=357195, majf=0, minf=17
+  IO depths    : 1=200.0%, 2=0.0%, 4=0.0%, 8=0.0%, 16=0.0%, 32=0.0%, >=64=0.0%
+     submit    : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
+     complete  : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
+     issued rwts: total=0,100290,0,0 short=100299,0,0,0 dropped=0,0,0,0
+     latency   : target=0, window=0, percentile=100.00%, depth=1
+
+Run status group 0 (all jobs):
+  WRITE: bw=2587KiB/s (2650kB/s), 2587KiB/s-2587KiB/s (2650kB/s-2650kB/s), io=220MiB (231MB), run=87060-87060msec
+
+Disk stats (read/write):
+  nvme3n1: ios=56220/200235, merge=0/0, ticks=3063/83183, in_queue=168099, util=99.92%

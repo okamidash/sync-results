@@ -1,0 +1,33 @@
+ 0 / 100000 B                                                                                                                                                                !   0.00% 20595 / 100000 Boooooooooooooooooooooooooooooooom                                                                                                                           !  20.59% 42944 / 100000 Boooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooom                                                                                         !  42.94% 65490 / 100000 Boooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooom                                                     !  65.49% 89242 / 100000 Booooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooom                !  89.24% 100000 / 100000 Boooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo! 100.00% 0s
+
+Summary:
+  Total:	0.8987 secs.
+  Slowest:	0.0230 secs.
+  Fastest:	0.0007 secs.
+  Average:	0.0089 secs.
+  Stddev:	0.0028 secs.
+  Requests/sec:	111270.2934
+
+Response time histogram:
+  0.0007 [1]	|
+  0.0029 [213]	|
+  0.0052 [1734]	|∎
+  0.0074 [32783]	|∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎
+  0.0096 [35952]	|∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎
+  0.0119 [19415]	|∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎
+  0.0141 [1648]	|∎
+  0.0163 [3571]	|∎∎∎
+  0.0186 [3740]	|∎∎∎∎
+  0.0208 [904]	|∎
+  0.0230 [39]	|
+
+Latency distribution:
+  10% in 0.0069 secs.
+  25% in 0.0072 secs.
+  50% in 0.0079 secs.
+  75% in 0.0099 secs.
+  90% in 0.0118 secs.
+  95% in 0.0157 secs.
+  99% in 0.0184 secs.
+  99.9% in 0.0197 secs.
+
