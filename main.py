@@ -8,13 +8,9 @@ import fnmatch
 import re
 from operator import itemgetter
 # Dependencies
-import plotly.graph_objects as go
 import plotly.express as px
 import pandas as pd
-import numpy as np
 
-fig = go.Figure(data=go.Bar(y=[2, 3, 1]))
-# fig.write_html('first_figure.html', auto_open=True)
 
 
 def find_tests(pattern: str, path: str) -> dict:
@@ -75,18 +71,31 @@ def find_timings(lines: list, start: str, end: str):
                         # Python 3.10 has case select
                         timings[percentile.group()] = final_value
 
-def parse_fio(fio_result: str) -> dict:
+def parse_fio(fio_result_path: str) -> dict:
     """parse_fio
     """
-    lines = [line.strip() for line in open(fio_result, 'r')]
+    lines = [line.strip() for line in open(fio_result_path, 'r')]
     # Inefficient, but easy to write
     clat_timings = find_timings(lines, "clat percentiles", "bw")
     sync_timings = find_timings(lines, "sync percentiles", "cpu")
-   
-    # print(clat_timings)
-    print(sync_timings)
-    #print(clat_timings)
     return sync_timings
+
+def parse_etcd(etcd_result_path: str) -> dict:
+    lines = [line.strip() for line in open(etcd_result_path, 'r')]
+    timings = {}
+    in_results = False
+    for line in lines:
+        if line == "Latency distribution:":
+            in_results = True
+        # Evalute this before adding the result, so we don't add the last result
+        elif line == '' and in_results:
+            return timings
+        elif in_results:
+            split_line = line.split(' ')
+            percentile = split_line[0]
+            value = float(split_line[2]) * 1000
+            timings[percentile] = value
+
 
 def to_df(fio_results: dict) -> pd.DataFrame:
     data = {}
@@ -99,41 +108,53 @@ def to_df(fio_results: dict) -> pd.DataFrame:
             averages[percentile] = sum(totals)/len(totals)
             
         data[fio_result[4:]] = averages
-        # for percentile in result[0].keys():
-        #     percentile_results = [x[percentile] for x in result]
-        #     average = round(sum(percentile_results)/len(percentile_results),5)
-
-        #     if data.get(percentile) is None:
-        #         data[percentile] = [average]
-        #     else:
-        #         data[percentile].append(average)
+  
             
-    
-    #print(results)
     df = pd.DataFrame.from_dict(
     {
        
         **data
     }
     )
-    #df.index = rows
-
-    print(df.head())
     return df
 
 raw_fio_results = find_tests("FIO*.txt", "raw")
-etcd_results = find_tests("ETCD*.txt", "raw")
+raw_etcd_results = find_tests("ETCD*.txt", "raw")
 
+drives = raw_fio_results.keys()
 fio_results = {}
-for drive in raw_fio_results:
-    print(drive)
+etcd_results = {}
+for drive in drives:
     fio_results[drive] = [parse_fio(rfw) for rfw in raw_fio_results[drive]]
+    etcd_results[drive] = [parse_etcd(rfw) for rfw in raw_etcd_results[drive]]
+
+etcd_latency = to_df(etcd_results)
+etcd_latency_figure = px.line(etcd_latency)
+etcd_latency_figure.update_layout(
+    xaxis_title="Sync Percentiles",
+    yaxis_title="Latency (msec)",
+    legend_title="Drive",
+    legend=dict(
+    yanchor="top",
+    y=0.99,
+    xanchor="left",
+    x=0.01
+    )
+)
+etcd_latency_figure.write_html('public/etcd.html', auto_open=True)
 
 fio_latency = to_df(fio_results)
-fio_latency_figure = px.line(fio_latency, log_y=True, template="plotly_dark")
+fio_latency_figure = px.line(fio_latency, log_y=True)
+#template="plotly_dark")
 fio_latency_figure.update_layout(
     xaxis_title="Sync Percentiles",
     yaxis_title="Latency (usec)",
     legend_title="Drive",
+    legend=dict(
+    yanchor="top",
+    y=0.99,
+    xanchor="left",
+    x=0.01
 )
-fio_latency_figure.write_html('public/fio_latency_figure.html', auto_open=True)
+)
+fio_latency_figure.write_html('public/fio.html',  auto_open=True)
