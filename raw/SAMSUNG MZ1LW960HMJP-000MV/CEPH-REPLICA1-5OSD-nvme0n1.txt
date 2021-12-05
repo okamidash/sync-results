@@ -1,0 +1,27 @@
+TEST_FILE: /data/testfile
+TEST_OUTPUT_PREFIX: test_device
+TEST_SIZE: 20G
+Benchmarking iops.fio into test_device-iops.json
+Benchmarking bandwidth.fio into test_device-bandwidth.json
+Benchmarking latency.fio into test_device-latency.json
+
+=====================
+FIO Benchmark Summary
+For: test_device
+SIZE: 20G
+QUICK MODE: DISABLED
+=====================
+IOPS (Read/Write)
+        Random:            7,838 / 4,956
+    Sequential:            1,067 / 3,175
+  CPU Idleness:                      77%
+
+Bandwidth in KiB/sec (Read/Write)
+        Random:        919,958 / 604,789
+    Sequential:        754,832 / 469,327
+  CPU Idleness:                      76%
+
+Latency in ns (Read/Write)
+        Random:    2,479,599 / 7,321,380
+    Sequential:    5,825,876 / 8,731,311
+  CPU Idleness:                      70%
