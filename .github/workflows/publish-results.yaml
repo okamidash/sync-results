@@ -1,4 +1,4 @@
-name: github pages
+name: Publish results to github pages
 
 on:
   push:
@@ -10,17 +10,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       # Clone the Repo
-      - uses: actions/checkout@v2
+      - name: "Checkout the repository"
+        uses: actions/checkout@v2
       # Get requirements
-      - name: Install Dependencies
+      - name: "Install Dependencies"
         run: python3 -m pip install -r requirements.txt
         shell: sh
       # Build
-      - name: Build the results
+      - name: "Build the results"
         run: python3 main.py
         shell: sh
       # Publish Results
-      - name: Deploy
+      - name: "Deploy the results to github pages"
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
