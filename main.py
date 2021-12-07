@@ -207,8 +207,6 @@ for drive in drives:
 #   SAMSUNG MZ1WV480HCGL-000MV  3           4       SEQUENTIAL  7624        4676        722774        462495        2812625       6605905
 #   SAMSUNG MZ1WV480HCGL-000MV  1           4       RANDOM      7624        4676        722774        462495        2812625       6605905
 #   SAMSUNG MZ1WV480HCGL-000MV  3           5       RANDOM      7624        4676        722774        462495        2812625       6605905
-indexes = ('drive','replicas','osds','metric')
-#index = pd.MultiIndex.from_arrays(indexes, names=)
 final = pd.DataFrame()
 for drive in drives:
     drive_pretty = drive[4:]
@@ -246,7 +244,7 @@ for drive in drives:
             ]
             final = final.append(df)
 
-print(final.query('replicas == 1 and osds == 5').groupby(by='metric').head())
+print(final.query('replicas == 1 and metric == "random"').groupby(by='metric').head())
 
 etcd_latency = to_df(etcd_results)
 etcd_latency_figure = px.line(etcd_latency)
@@ -261,7 +259,7 @@ etcd_latency_figure.update_layout(
     x=0.01
     )
 )
-#etcd_latency_figure.write_html('public/etcd.html', auto_open=True)
+etcd_latency_figure.write_html('public/etcd.html')
 
 fio_latency = to_df(fio_results)
 fio_latency_figure = px.line(fio_latency, log_y=True)
@@ -277,4 +275,4 @@ fio_latency_figure.update_layout(
     x=0.01
 )
 )
-#fio_latency_figure.write_html('public/fio.html',  auto_open=True)
+fio_latency_figure.write_html('public/fio.html')
