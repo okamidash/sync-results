@@ -7,11 +7,14 @@ import os
 import fnmatch
 import re
 from operator import itemgetter
+from collections import Counter
 # Dependencies
 import plotly.express as px
 import pandas as pd
 
-
+# Locale mangling
+import locale
+locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
 
 def find_tests(pattern: str, path: str) -> dict:
     """find_tests
@@ -96,6 +99,48 @@ def parse_etcd(etcd_result_path: str) -> dict:
             value = float(split_line[2]) * 1000
             timings[percentile] = value
 
+def cs_to_int(comma_separated_string: str) -> int:
+    return locale.atoi(comma_separated_string)
+
+def parse_ceph(ceph_result_path: str) -> dict:
+    lines = [line.strip() for line in open(ceph_result_path, 'r')]
+    in_results = False
+    results = {}
+    for line in lines:
+        if line == "IOPS (Read/Write)":
+            resultset = "IOPS"
+            in_results = True
+        elif line == "Bandwidth in KiB/sec (Read/Write)":
+            resultset = "BW"
+            in_results = True
+        elif line == "Latency in ns (Read/Write)":
+            resultset = "LAT"
+            in_results = True
+        # Evalute this before adding the result, so we don't add the last result
+        elif line == '' and in_results:
+            in_results = False
+        elif in_results is True:
+            split_line = line.split(' ')
+            if results.get("random") is None:
+                results["random"] = {}
+            elif results.get("sequential") is None:
+                results["sequential"] = {}
+
+            metric = split_line[0]
+            if metric == "Random:":
+                results["random"][resultset] = {
+                    "read": cs_to_int(split_line[-3]),
+                    "write": cs_to_int(split_line[-1])
+                }
+
+            elif metric == "Sequential:":
+                results["sequential"][resultset] = {
+                    "read": cs_to_int(split_line[-3]),
+                    "write": cs_to_int(split_line[-1])
+                }
+
+
+    return results
 
 def to_df(fio_results: dict) -> pd.DataFrame:
     data = {}
@@ -120,13 +165,88 @@ def to_df(fio_results: dict) -> pd.DataFrame:
 
 raw_fio_results = find_tests("FIO*.txt", "raw")
 raw_etcd_results = find_tests("ETCD*.txt", "raw")
+raw_ceph_results = {
+    4: {
+
+        1: find_tests("CEPH-REPLICA1-4OSD*.txt", "raw"),
+        3: find_tests("CEPH-REPLICA3-4OSD*.txt", "raw")
+    },
+    5: {
+        1: find_tests("CEPH-REPLICA1-5OSD*.txt", "raw"),
+        3: find_tests("CEPH-REPLICA3-5OSD*.txt", "raw")
+    }
+   
+}
+
+
 
 drives = raw_fio_results.keys()
 fio_results = {}
 etcd_results = {}
+ceph_results = {}
 for drive in drives:
     fio_results[drive] = [parse_fio(rfw) for rfw in raw_fio_results[drive]]
     etcd_results[drive] = [parse_etcd(rfw) for rfw in raw_etcd_results[drive]]
+    ceph_results[drive] = {
+        4: {
+            1: [parse_ceph(rfw) for rfw in raw_ceph_results[4][1][drive]][0],
+            3: [parse_ceph(rfw) for rfw in raw_ceph_results[4][3][drive]][0]
+        },
+        5: {
+            1: [parse_ceph(rfw) for rfw in raw_ceph_results[5][1][drive]][0],
+            3: [parse_ceph(rfw) for rfw in raw_ceph_results[5][3][drive]][0]
+        }
+    }
+
+# Do some extra special mangling to the ceph data so that pandas can work with it properly
+# The aim is to create a table that looks roughly like this
+#   Drive                       REPLICAS    OSDS    METRIC      IOPS (R)    IOPS (W)    Bandwidth (R) Bandwitch (W) Latency (R)   Latency(W)
+#   SAMSUNG MZ1WV480HCGL-000MV  1           4       RANDOM      7624        4676        722774        462495        2812625       6605905
+#   SAMSUNG MZ1WV480HCGL-000MV  1           4       SEQUENTIAL  7624        4676        722774        462495        2812625       6605905
+#   SAMSUNG MZ1WV480HCGL-000MV  3           4       RANDOM      7624        4676        722774        462495        2812625       6605905
+#   SAMSUNG MZ1WV480HCGL-000MV  3           4       SEQUENTIAL  7624        4676        722774        462495        2812625       6605905
+#   SAMSUNG MZ1WV480HCGL-000MV  1           4       RANDOM      7624        4676        722774        462495        2812625       6605905
+#   SAMSUNG MZ1WV480HCGL-000MV  3           5       RANDOM      7624        4676        722774        462495        2812625       6605905
+indexes = ('drive','replicas','osds','metric')
+#index = pd.MultiIndex.from_arrays(indexes, names=)
+final = pd.DataFrame()
+for drive in drives:
+    drive_pretty = drive[4:]
+    ceph_results[drive]
+    for osd_count in ceph_results[drive]:
+        for replica_count in ceph_results[drive][osd_count]:
+            result = ceph_results[drive][osd_count][replica_count]
+            rand_result = result['random']
+            seq_result =  result['sequential']
+            # Do it for Random, then sequential
+            df =  [{
+                    'drive': drive_pretty,
+                    'replicas': replica_count,
+                    'osds': osd_count,
+                    'metric': 'random',
+                    'IOPS (Read)':  rand_result['IOPS']['read'],
+                    'IOPS (Write)': rand_result['IOPS']['write'],
+                    'Bandwidth (Read)':  rand_result['BW']['read'],
+                    'Bandwidth (Write)': rand_result['BW']['write'],
+                    'Latency (Read)':  rand_result['LAT']['read'],
+                    'Latency (Write)': rand_result['LAT']['write'],
+                },
+                {
+                    'drive': drive_pretty,
+                    'replicas': replica_count,
+                    'osds': osd_count,
+                    'metric': 'sequential',
+                    'IOPS (Read)':  seq_result['IOPS']['read'],
+                    'IOPS (Write)': seq_result['IOPS']['write'],
+                    'Bandwidth (Read)':  seq_result['BW']['read'],
+                    'Bandwidth (Write)': seq_result['BW']['write'],
+                    'Latency (Read)':  seq_result['LAT']['read'],
+                    'Latency (Write)': seq_result['LAT']['write'],
+                }
+            ]
+            final = final.append(df)
+
+print(final.query('replicas == 1 and osds == 5').groupby(by='metric').head())
 
 etcd_latency = to_df(etcd_results)
 etcd_latency_figure = px.line(etcd_latency)
@@ -141,7 +261,7 @@ etcd_latency_figure.update_layout(
     x=0.01
     )
 )
-etcd_latency_figure.write_html('public/etcd.html', auto_open=True)
+#etcd_latency_figure.write_html('public/etcd.html', auto_open=True)
 
 fio_latency = to_df(fio_results)
 fio_latency_figure = px.line(fio_latency, log_y=True)
@@ -157,4 +277,4 @@ fio_latency_figure.update_layout(
     x=0.01
 )
 )
-fio_latency_figure.write_html('public/fio.html',  auto_open=True)
+#fio_latency_figure.write_html('public/fio.html',  auto_open=True)
