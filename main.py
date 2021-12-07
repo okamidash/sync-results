@@ -100,7 +100,7 @@ def parse_etcd(etcd_result_path: str) -> dict:
             timings[percentile] = value
 
 def cs_to_int(comma_separated_string: str) -> int:
-    return locale.atoi(comma_separated_string)
+    return locale.atoi(comma_separated_string) / 1000
 
 def parse_ceph(ceph_result_path: str) -> dict:
     lines = [line.strip() for line in open(ceph_result_path, 'r')]
@@ -245,6 +245,15 @@ for drive in drives:
             final = final.append(df)
 
 print(final.query('replicas == 1 and metric == "random"').groupby(by='metric').head())
+
+bar_chart = px.bar(
+    final.query('replicas == 3 and metric == "sequential"'), 
+    x='drive', 
+    y='Bandwidth (Write)', 
+    
+    facet_col="osds",
+    barmode='group')
+bar_chart.write_html('public/bar.html', auto_open=True)
 
 etcd_latency = to_df(etcd_results)
 etcd_latency_figure = px.line(etcd_latency)
