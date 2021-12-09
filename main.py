@@ -280,7 +280,7 @@ def mkset(final, rseq: str, rw: str) -> dict:
 
 
 def create_figure(final, rseq: str, rw: str, metric: str):
-    dataset = mkset(final, "sequential", "read")
+    dataset = mkset(final, rseq, rw)
     data = []
     for name in dataset:
         dataset_indi = dataset[name]
