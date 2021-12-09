@@ -324,7 +324,13 @@ create_figure(final, "sequential", "write", "IOPS")
 create_figure(final, "random", "read", "IOPS")
 create_figure(final, "random", "write", "IOPS")
 
-
+# Create the IOPS figures
+# Sequential
+create_figure(final, "sequential", "read",  "Latency")
+create_figure(final, "sequential", "write", "Latency")
+# Random
+create_figure(final, "random", "read", "Latency")
+create_figure(final, "random", "write", "Latency")
 
 
 
