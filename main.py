@@ -11,6 +11,7 @@ from collections import Counter
 # Dependencies
 import plotly.express as px
 import pandas as pd
+import plotly.graph_objects as go
 
 # Locale mangling
 import locale
@@ -100,7 +101,7 @@ def parse_etcd(etcd_result_path: str) -> dict:
             timings[percentile] = value
 
 def cs_to_int(comma_separated_string: str) -> int:
-    return locale.atoi(comma_separated_string) / 1000
+    return locale.atoi(comma_separated_string)
 
 def parse_ceph(ceph_result_path: str) -> dict:
     lines = [line.strip() for line in open(ceph_result_path, 'r')]
@@ -222,38 +223,123 @@ for drive in drives:
                     'replicas': replica_count,
                     'osds': osd_count,
                     'metric': 'random',
-                    'IOPS (Read)':  rand_result['IOPS']['read'],
-                    'IOPS (Write)': rand_result['IOPS']['write'],
-                    'Bandwidth (Read)':  rand_result['BW']['read'],
-                    'Bandwidth (Write)': rand_result['BW']['write'],
-                    'Latency (Read)':  rand_result['LAT']['read'],
-                    'Latency (Write)': rand_result['LAT']['write'],
+                    'rw':'read',
+                    'IOPS':  rand_result['IOPS']['read'],
+                    'Bandwidth': rand_result['BW']['read'],
+                    'Latency': rand_result['LAT']['read'],
+                },
+                {
+                    'drive': drive_pretty,
+                    'replicas': replica_count,
+                    'osds': osd_count,
+                    'metric': 'random',
+                    'rw':'write',
+                    'IOPS':  rand_result['IOPS']['write'],
+                    'Bandwidth': rand_result['BW']['write'],
+                    'Latency': rand_result['LAT']['write'],
                 },
                 {
                     'drive': drive_pretty,
                     'replicas': replica_count,
                     'osds': osd_count,
                     'metric': 'sequential',
-                    'IOPS (Read)':  seq_result['IOPS']['read'],
-                    'IOPS (Write)': seq_result['IOPS']['write'],
-                    'Bandwidth (Read)':  seq_result['BW']['read'],
-                    'Bandwidth (Write)': seq_result['BW']['write'],
-                    'Latency (Read)':  seq_result['LAT']['read'],
-                    'Latency (Write)': seq_result['LAT']['write'],
+                    'rw':'read',
+                    'IOPS':         seq_result['IOPS']['read'],
+                    'Bandwidth':    seq_result['BW']['read'],
+                    'Latency':      seq_result['LAT']['read'],
+                },
+                {
+                    'drive': drive_pretty,
+                    'replicas': replica_count,
+                    'osds': osd_count,
+                    'metric': 'sequential',
+                    'rw':'write',
+                    'IOPS':         seq_result['IOPS']['write'],
+                    'Bandwidth':    seq_result['BW']['write'],
+                    'Latency':      seq_result['LAT']['write'],
                 }
             ]
             final = final.append(df)
 
-print(final.query('replicas == 1 and metric == "random"').groupby(by='metric').head())
+#print(final.query('replicas == 1 and metric == "random" and rw =="write"').groupby(by='metric').head())
+
+def find_data(final, replicas: int, osds: int, metric: str, rw: str, ):
+    return final.query(f'replicas == {replicas} and metric == "{metric}" and rw =="{rw}" and osds == {osds}').sort_values(by='drive')
+
+def mkset(final, rseq: str, rw: str) -> dict:
+    r1osd4 = find_data(final, 1, 4, rseq, rw)
+    r1osd5 = find_data(final, 1, 5, rseq, rw)
+    r3osd4 = find_data(final, 3, 4, rseq, rw)
+    r3osd5 = find_data(final, 3, 5, rseq, rw)
+    return {
+        'Replica 1, 4 OSD': r1osd4,
+        'Replica 1, 5 OSD': r1osd5,
+        'Replica 3, 4 OSD': r3osd4,
+        'Replica 3, 5 OSD': r3osd5
+    }
+
+
+def create_figure(final, rseq: str, rw: str, metric: str):
+    dataset = mkset(final, "sequential", "read")
+    data = []
+    for name in dataset:
+        dataset_indi = dataset[name]
+        data.append(
+            go.Bar(
+                name=name,
+                x=dataset_indi['drive'],
+                y=dataset_indi[metric] 
+            ),
+        )
+    
+    figure = go.Figure(data=data)
+    figure.update_layout(
+    xaxis_title="Drive",
+    yaxis_title=metric,
+    barmode='group',
+    legend_title="",
+    legend=dict(
+        yanchor="top",
+        y=0.99,
+        xanchor="right",
+        x=0.99
+        )
+    )
+    
+    figure.write_html(f'public/{rseq}_{rw}_{metric}.html')
+
+# Create the bandwidth figures
+# Sequential
+create_figure(final, "sequential", "read",  "Bandwidth")
+create_figure(final, "sequential", "write", "Bandwidth")
+# Random
+create_figure(final, "random", "read", "Bandwidth")
+create_figure(final, "random", "write", "Bandwidth")
+
+# Create the IOPS figures
+# Sequential
+create_figure(final, "sequential", "read",  "IOPS")
+create_figure(final, "sequential", "write", "IOPS")
+# Random
+create_figure(final, "random", "read", "IOPS")
+create_figure(final, "random", "write", "IOPS")
+
+
+
+
+
+
+
+
 
 bar_chart = px.bar(
-    final.query('replicas == 3 and metric == "sequential"'), 
+    final.query('replicas == 1 and metric == "random" and rw =="write"'), 
     x='drive', 
-    y='Bandwidth (Write)', 
+    y='Bandwidth', 
     
     facet_col="osds",
     barmode='group')
-bar_chart.write_html('public/bar.html', auto_open=True)
+#bar_chart.write_html('public/bar.html', auto_open=True)
 
 etcd_latency = to_df(etcd_results)
 etcd_latency_figure = px.line(etcd_latency)
@@ -268,7 +354,7 @@ etcd_latency_figure.update_layout(
     x=0.01
     )
 )
-etcd_latency_figure.write_html('public/etcd.html')
+#etcd_latency_figure.write_html('public/etcd.html')
 
 fio_latency = to_df(fio_results)
 fio_latency_figure = px.line(fio_latency, log_y=True)
@@ -284,4 +370,4 @@ fio_latency_figure.update_layout(
     x=0.01
 )
 )
-fio_latency_figure.write_html('public/fio.html')
+#fio_latency_figure.write_html('public/fio.html')
