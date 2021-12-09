@@ -21,7 +21,9 @@ jobs:
         run: python3 main.py
         shell: sh
       - name: "Generate a tree"
-        run: tree -H 'public' -L 1 --noreport --charset utf-8 -o public/index.html
+        run: tree -H '.' -L 1 --noreport --charset utf-8 -o index.html
+        working-directory: public
+        shell: sh
       # Publish Results
       - name: "Deploy the results to github pages"
         uses: peaceiris/actions-gh-pages@v3
