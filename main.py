@@ -354,7 +354,7 @@ etcd_latency_figure.update_layout(
     x=0.01
     )
 )
-#etcd_latency_figure.write_html('public/etcd.html')
+etcd_latency_figure.write_html('public/etcd.html')
 
 fio_latency = to_df(fio_results)
 fio_latency_figure = px.line(fio_latency, log_y=True)
@@ -370,4 +370,4 @@ fio_latency_figure.update_layout(
     x=0.01
 )
 )
-#fio_latency_figure.write_html('public/fio.html')
+fio_latency_figure.write_html('public/fio.html')
