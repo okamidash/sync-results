@@ -279,7 +279,7 @@ def mkset(final, rseq: str, rw: str) -> dict:
     }
 
 
-def create_figure(final, rseq: str, rw: str, metric: str):
+def create_figure(final, rseq: str, rw: str, metric: str, unit="": str):
     dataset = mkset(final, rseq, rw)
     data = []
     for name in dataset:
@@ -295,7 +295,8 @@ def create_figure(final, rseq: str, rw: str, metric: str):
     figure = go.Figure(data=data)
     figure.update_layout(
     xaxis_title="Drive",
-    yaxis_title=metric,
+    yaxis_title=f"{metric} ({unit})",
+    title=f"{metric.capitalize()} ({rseq.capitalize()} {rw}s)",
     barmode='group',
     legend_title="",
     legend=dict(
@@ -309,12 +310,13 @@ def create_figure(final, rseq: str, rw: str, metric: str):
     figure.write_html(f'public/{rseq}_{rw}_{metric}.html')
 
 # Create the bandwidth figures
+bandwidth_unit = "KiB/sec"
 # Sequential
-create_figure(final, "sequential", "read",  "Bandwidth")
-create_figure(final, "sequential", "write", "Bandwidth")
+create_figure(final, "sequential", "read",  "Bandwidth", bandwidth_unit)
+create_figure(final, "sequential", "write", "Bandwidth", bandwidth_unit)
 # Random
-create_figure(final, "random", "read", "Bandwidth")
-create_figure(final, "random", "write", "Bandwidth")
+create_figure(final, "random", "read", "Bandwidth", bandwidth_unit)
+create_figure(final, "random", "write", "Bandwidth", bandwidth_unit)
 
 # Create the IOPS figures
 # Sequential
@@ -325,12 +327,14 @@ create_figure(final, "random", "read", "IOPS")
 create_figure(final, "random", "write", "IOPS")
 
 # Create the IOPS figures
+latency_unit = "Microseconds"
+
 # Sequential
-create_figure(final, "sequential", "read",  "Latency")
-create_figure(final, "sequential", "write", "Latency")
+create_figure(final, "sequential", "read",  "Latency", latency_unit)
+create_figure(final, "sequential", "write", "Latency", latency_unit)
 # Random
-create_figure(final, "random", "read", "Latency")
-create_figure(final, "random", "write", "Latency")
+create_figure(final, "random", "read", "Latency", latency_unit)
+create_figure(final, "random", "write", "Latency", latency_unit)
 
 
 
