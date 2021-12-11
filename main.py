@@ -279,7 +279,9 @@ def mkset(final, rseq: str, rw: str) -> dict:
     }
 
 
-def create_figure(final, rseq: str, rw: str, metric: str, unit="": str):
+def create_figure(final, rseq: str, rw: str, metric: str, unit: str = ""):
+    if unit is not "":
+        unit = f" ({unit})"
     dataset = mkset(final, rseq, rw)
     data = []
     for name in dataset:
@@ -295,7 +297,7 @@ def create_figure(final, rseq: str, rw: str, metric: str, unit="": str):
     figure = go.Figure(data=data)
     figure.update_layout(
     xaxis_title="Drive",
-    yaxis_title=f"{metric} ({unit})",
+    yaxis_title=f"{metric}{unit}",
     title=f"{metric.capitalize()} ({rseq.capitalize()} {rw}s)",
     barmode='group',
     legend_title="",
