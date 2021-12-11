@@ -296,7 +296,7 @@ def create_figure(final, rseq: str, rw: str, metric: str, unit: str = ""):
     
     figure = go.Figure(data=data)
     figure.update_layout(
-    xaxis_title="Drive",
+    #xaxis_title="Drive",
     yaxis_title=f"{metric}{unit}",
     title=f"{metric.capitalize()} ({rseq.capitalize()} {rw}s)",
     barmode='group',
